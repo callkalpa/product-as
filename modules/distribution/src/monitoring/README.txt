@@ -48,8 +48,8 @@ example, if we set the offset value to be 5, the port of the cassandra datasourc
  value is 9160).
 
 3. Copy AS_Monitoring.tbox to repository/deployment/server/bam-toolbox
-   (Create the bam-toolbox directory if it already doesn't exist)
-4. Add the following to <BAM_HOME>/conf/datasources/master-datasources.xml file.
+   (Create the bam-toolbox directory if it doesn't already exist)
+4. Add the following to <BAM_HOME>/conf/datasources/master-datasources.xml file. Here we have used the embedded H2 database, you can use the database of your choice (MySQL for example).
 
     <datasource>
         <name>WSO2AS_MONITORING_DB</name>
@@ -59,7 +59,7 @@ example, if we set the offset value to be 5, the port of the cassandra datasourc
         </jndiConfig>
         <definition type="RDBMS">
             <configuration>
-                <url>jdbc:h2:<BAM_HOME>/repository/database/WSO2AS_MONITORING_DB;AUTO_SERVER=TRUE</url>
+                <url>jdbc:h2:repository/database/WSO2AS_MONITORING_DB;AUTO_SERVER=TRUE</url>
                 <username>wso2carbon</username>
                 <password>wso2carbon</password>
                 <driverClassName>org.h2.Driver</driverClassName>
@@ -83,7 +83,7 @@ id="monitoring.webapp.calls">. You also need to change the port of the receiverU
  be 7711, increase it by the value you increase the Offset in BAM. For example, if we set the offset value to be 5,
  the port of the receiverUrl would be 7716.
 
-2. Add the following to <AS_HOME>/conf/datasources/master-datasources.xml file.
+2. Add the following to <AS_HOME>/conf/datasources/master-datasources.xml file. This needs to be the same datasource we configured in BAM.
 
        <datasource>
            <name>WSO2AS_MONITORING_DB</name>
@@ -122,7 +122,7 @@ There you will find the "monitoring" jaggery app.
     Changing the Statistics Database
 ---------------------------------------------------------------------------------
 
-It is possible to use a different database than the default h2 database for statistics publishing.
+It is possible to use a different database than the default H2 database for statistics publishing.
 When doing this you need to change the properties of the datasource element, and additionally delete
 some meta data tables created by the previous executions of the hive script.
 
