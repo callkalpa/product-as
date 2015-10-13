@@ -155,7 +155,7 @@ public class UserManagementWithAdminUserTestCase extends ASIntegrationTest {
 
 	@Test(groups = "wso2.as", description = "Add already existing role", dependsOnMethods = {
 			"testCreateExistingUser" }, expectedExceptions = RemoteException.class,
-			expectedExceptionsMessageRegExp = "Role name:.*in the system. Please pick another role name.")
+			expectedExceptionsMessageRegExp = "RoleExisting Role name:.*in the system. Please pick another role name.")
 	public void testCreateExistingRole() throws Exception {
 		userManagementClient.addRole(roleName, null, permissions);
 	}

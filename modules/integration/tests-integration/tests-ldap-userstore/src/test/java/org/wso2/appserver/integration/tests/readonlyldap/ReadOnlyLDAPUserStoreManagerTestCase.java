@@ -156,7 +156,7 @@ public class ReadOnlyLDAPUserStoreManagerTestCase extends ASIntegrationTest {
 
     @Test(groups = "wso2.as", description = "Check update role name failure", expectedExceptions =
             AxisFault.class, expectedExceptionsMessageRegExp =
-                  "Read-only UserStoreManager. Roles cannot be added or modified.")
+                  "ReadOnlyUserStoreManager Read-only UserStoreManager. Roles cannot be added or modified.")
     public void updateRoleNameTest() throws Exception {
         String updatedUserRole = newUserRole + "updated";
         userMgtClient.updateRoleName(newUserRole, updatedUserRole);
@@ -183,8 +183,8 @@ public class ReadOnlyLDAPUserStoreManagerTestCase extends ASIntegrationTest {
     }
 
     @Test(groups = "wso2.as", description = "Check add remove roles of user failure", expectedExceptions =
-            AxisFault.class, expectedExceptionsMessageRegExp = "Error occurred while getting" +
-                                                               " database type from DB connection")
+            AxisFault.class, expectedExceptionsMessageRegExp = "Error occurred while updating hybrid role list of" +
+                                                               " user : ReadOnlyLDAPUserName") 
     public void addRemoveRolesOfUserTest() throws Exception {
 
         String[] newRoles = new String[]{FrameworkConstants.ADMIN_ROLE};
@@ -194,7 +194,7 @@ public class ReadOnlyLDAPUserStoreManagerTestCase extends ASIntegrationTest {
     }
 
     @Test(groups = "wso2.as", description = "Check add remove users of role failure", expectedExceptions =
-            AxisFault.class, expectedExceptionsMessageRegExp = "Read-only user store.Roles cannot be added or modfified")
+            AxisFault.class, expectedExceptionsMessageRegExp = "Read-only user store.Roles cannot be added or modified")
     public void addRemoveUsersOfRoleTest() throws Exception {
 
         String[] newUsers = new String[]{asServer.getSuperTenant().getTenantAdmin().getUserName()};

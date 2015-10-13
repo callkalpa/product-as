@@ -720,7 +720,7 @@
 -->
 
         <carbon.deployment.version>4.5.3</carbon.deployment.version>
-        <carbon.kernel.version>4.4.1</carbon.kernel.version>
+        <carbon.kernel.version>4.4.2</carbon.kernel.version>
         <carbon.commons.version>4.4.7</carbon.commons.version>
         <carbon.registry.version>4.4.8</carbon.registry.version>
         <carbon.identity.version>4.5.5</carbon.identity.version>
@@ -902,4 +902,19 @@
             </plugins>
         </pluginManagement>
     </build>
+
+<repositories>
+<repository>
+<id>wso2-nexus-staging</id>
+<name>WSO2 staging Repository</name>
+<url>http://maven.wso2.org/nexus/content/repositories/orgwso2carbon-019/</url>
+<releases>
+<enabled>true</enabled>
+<updatePolicy>daily</updatePolicy>
+<checksumPolicy>ignore</checksumPolicy>
+</releases>
+</repository>
+</repositories>
+
+
 </project>
