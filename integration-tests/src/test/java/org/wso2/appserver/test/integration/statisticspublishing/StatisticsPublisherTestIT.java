@@ -17,7 +17,6 @@
  */
 package org.wso2.appserver.test.integration.statisticspublishing;
 
-import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -36,8 +35,6 @@ import java.net.URL;
  * This class contains integration test related to HTTP statistics publishing.
  */
 public class StatisticsPublisherTestIT extends TestBase {
-    Logger log = Logger.getLogger(StatisticsPublisherTestIT.class);
-
     private ThriftTestServer thriftTestServer;
 
     @BeforeClass
@@ -94,9 +91,8 @@ public class StatisticsPublisherTestIT extends TestBase {
      */
     private String getStreamDefinition() throws IOException, ParseException {
         JSONParser parser = new JSONParser();
-        JSONObject jsonObject = null;
         Object obj = parser.parse(new FileReader(DataPublisherTestUtil.getStreamDefinitionPath()));
-        jsonObject = (JSONObject) obj;
+        JSONObject jsonObject = (JSONObject) obj;
         return jsonObject.toJSONString();
     }
 

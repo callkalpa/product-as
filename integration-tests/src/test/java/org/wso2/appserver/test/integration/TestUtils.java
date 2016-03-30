@@ -62,7 +62,7 @@ public class TestUtils {
      * @return list of available ports
      */
     public static List<Integer> getAvailablePortsFromRange(int portMin, int portMax, int numberOfPorts) {
-        List<Integer> availablePorts = new ArrayList();
+        List<Integer> availablePorts = new ArrayList<>();
 
         int port = portMin;
         int portCount = 0;
