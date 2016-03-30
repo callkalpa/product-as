@@ -21,19 +21,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
+
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.wso2.appserver.test.integration.statisticspublishing.StatisticsPublisherConstants;
+import org.wso2.appserver.test.integration.statisticspublishing.ThriftTestServer;
+import org.wso2.carbon.databridge.core.exception.DataBridgeException;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -58,6 +60,8 @@ import javax.xml.xpath.XPathFactory;
  */
 public class TestSuiteListener implements ISuiteListener {
     private static final Logger log = LoggerFactory.getLogger(TestSuiteListener.class);
+    private static final String HOST = "localhost";
+
     private Process applicationServerProcess;
     private int serverStartCheckTimeout;
     private File appserverHome;
@@ -104,6 +108,7 @@ public class TestSuiteListener implements ISuiteListener {
             }
 
             addValveToServerXML(TestConstants.CONFIGURATION_LOADER_SAMPLE_VALVE);
+            addValveToServerXML(TestConstants.HTTP_STATISTICS_PUBLISHING_VALVE);
 
             log.info("Starting the server...");
             applicationServerProcess = startPlatformDependApplicationServer();
@@ -114,10 +119,27 @@ public class TestSuiteListener implements ISuiteListener {
                 log.info("Application server started successfully. Running test suite...");
             }
 
+            // Thrift server shouldn't be started at the listener but at the statistics publishing test case,
+            // Please refer https://wso2.org/jira/browse/WSAS-2219
+            log.info("Starting the thrift server...");
+            // start the thrift server
+            int thriftPort = StatisticsPublisherConstants.DEFAULT_THRIFT_PORT;
+            if (!TestUtils.isPortAvailable(StatisticsPublisherConstants.DEFAULT_THRIFT_PORT)) {
+                thriftPort = TestUtils.getAvailablePortsFromRange(StatisticsPublisherConstants.PORT_SCAN_MIN,
+                        StatisticsPublisherConstants.PORT_SCAN_MAX, 1).get(0);
+            }
+            ThriftTestServer thriftTestServer = new ThriftTestServer(thriftPort);
+            TestBase.setThriftTestServer(thriftTestServer);
+            thriftTestServer.start();
+
         } catch (IOException | TransformerException | SAXException | ParserConfigurationException |
                 XPathExpressionException ex) {
             terminateApplicationServer();
             String message = "Could not start the server";
+            log.error(message, ex);
+            throw new RuntimeException(message, ex);
+        } catch (DataBridgeException ex) {
+            String message = "Could not start the thrift server";
             log.error(message, ex);
             throw new RuntimeException(message, ex);
         }
@@ -129,6 +151,7 @@ public class TestSuiteListener implements ISuiteListener {
         log.info("Starting post-integration tasks...");
         log.info("Terminating the Application server");
         terminateApplicationServer();
+        TestBase.getThriftTestServer().stop();
         log.info("Finished the post-integration tasks...");
     }
 
@@ -154,7 +177,7 @@ public class TestSuiteListener implements ISuiteListener {
         log.info("Checking server availability... (Timeout: " + serverStartCheckTimeout + " seconds)");
         int startupCounter = 0;
         boolean isTimeout = false;
-        while (!isServerListening("localhost", applicationServerPort)) {
+        while (!TestUtils.isServerListening(HOST, applicationServerPort)) {
             if (startupCounter >= serverStartCheckTimeout) {
                 isTimeout = true;
                 break;
@@ -175,54 +198,6 @@ public class TestSuiteListener implements ISuiteListener {
             log.error(message);
             throw new IOException(message);
         }
-    }
-
-    /**
-     * Checks if the server is listening using the {@code host} name and the {@code port} number specified.
-     *
-     * @param host the host name
-     * @param port the port number
-     * @return true if the server is listening else false
-     */
-    private static boolean isServerListening(String host, int port) {
-        Socket socket = null;
-        try {
-            socket = new Socket(host, port);
-            return true;
-        } catch (Exception e) {
-            return false;
-        } finally {
-            if (socket != null) {
-                try {
-                    socket.close();
-                } catch (Exception ignored) {
-                }
-            }
-        }
-    }
-
-    /**
-     * Checks if the specified {@code port} number is available or closed.
-     *
-     * @param port the port number
-     * @return true if the specified {@code port} is available or closed else false
-     */
-    private static boolean isPortAvailable(final int port) {
-        ServerSocket serverSocket = null;
-        try {
-            serverSocket = new ServerSocket(port);
-            serverSocket.setReuseAddress(true);
-            return true;
-        } catch (final IOException ignored) {
-        } finally {
-            if (serverSocket != null) {
-                try {
-                    serverSocket.close();
-                } catch (IOException ignored) {
-                }
-            }
-        }
-        return false;
     }
 
     /**
@@ -275,7 +250,7 @@ public class TestSuiteListener implements ISuiteListener {
      * @return available port
      */
     private int getAvailablePort(String portName, int port, int portMin, int portRange) {
-        if (isPortAvailable(port)) {
+        if (TestUtils.isPortAvailable(port)) {
             log.info("{} default port {} is available.", portName, port);
             return port;
         } else {
@@ -285,7 +260,7 @@ public class TestSuiteListener implements ISuiteListener {
             port = portMin;
             while (port <= (portMin + portRange)) {
                 log.info("Trying to use port {} for {}", port, portName);
-                if (isPortAvailable(port)) {
+                if (TestUtils.isPortAvailable(port)) {
                     log.info("Port {} is available for {}", port, portName);
                     break;
                 }

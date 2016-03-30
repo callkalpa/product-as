@@ -21,81 +21,83 @@ import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+import org.json.simple.parser.ParseException;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import org.wso2.carbon.databridge.agent.exception.DataEndpointAgentConfigurationException;
-import org.wso2.carbon.databridge.agent.exception.DataEndpointAuthenticationException;
-import org.wso2.carbon.databridge.agent.exception.DataEndpointConfigurationException;
-import org.wso2.carbon.databridge.agent.exception.DataEndpointException;
-import org.wso2.carbon.databridge.commons.exception.MalformedStreamDefinitionException;
-import org.wso2.carbon.databridge.commons.exception.TransportException;
-import org.wso2.carbon.databridge.core.exception.DataBridgeException;
-import org.wso2.carbon.databridge.core.exception.StreamDefinitionStoreException;
+import org.wso2.appserver.test.integration.TestBase;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class StatisticsPublisherTestIT {
+/**
+ * This class contains integration test related to HTTP statistics publishing.
+ */
+public class StatisticsPublisherTestIT extends TestBase {
     Logger log = Logger.getLogger(StatisticsPublisherTestIT.class);
 
     private ThriftTestServer thriftTestServer;
 
     @BeforeClass
-    public static void init() {
-
+    public void init() throws Exception {
         DataPublisherTestUtil.setKeyStoreParams();
         DataPublisherTestUtil.setTrustStoreParams();
+        thriftTestServer = getThriftTestServer();
+    }
+
+    @Test(description = "Test whether the thrift server is started.")
+    public void testThriftServerStarted() throws Exception {
+        Assert.assertTrue(thriftTestServer.isServerStarted(), "Thrift server is not started");
+    }
+
+    @Test(description = "Test whether the stream definition is added properly.",
+            dependsOnMethods = {"testThriftServerStarted"})
+    public void testAddingStreamDefinition() throws Exception {
+        thriftTestServer.addStreamDefinition(getStreamDefinition());
+        Assert.assertNotNull(thriftTestServer.getStreamDefinition(StatisticsPublisherConstants.STREAM_DEFINITION_NAME,
+                StatisticsPublisherConstants.STREAM_DEFINITION_VERSION),
+                "Stream definition is not added.");
+    }
+
+    /**
+     * This test invokes a sample webapp in application server and verify the event being published to the
+     * thrift endpoint.
+     */
+    @Test(description = "Test whether the event is published to the thrift server.",
+            dependsOnMethods = {"testAddingStreamDefinition"})
+    public void testEventPublishing() throws IOException {
+        URL endpoint = new URL(getBaseUrl() + "/examples/servlets/servlet/HelloWorldExample");
+        java.net.HttpURLConnection urlConnection = (java.net.HttpURLConnection) endpoint.openConnection();
+        urlConnection.setRequestMethod("GET");
+
+        urlConnection.setRequestProperty("User-Agent", StatisticsPublisherConstants.USER_AGENT);
+
+        int responseCode = urlConnection.getResponseCode();
+        Assert.assertEquals(responseCode, 200, "Couldn't invoke the sample webapp [" + endpoint + "]");
+
 
     }
 
-    private String convertJSONtoString() throws IOException {
+    @AfterClass
+    public void destroy() {
+        thriftTestServer.stop();
+    }
+
+    /**
+     * This method is used to convert the stream definition to a string.
+     *
+     * @return string representation of the stream definition
+     * @throws IOException
+     * @throws ParseException
+     */
+    private String getStreamDefinition() throws IOException, ParseException {
         JSONParser parser = new JSONParser();
         JSONObject jsonObject = null;
-        try {
-
-            Object obj = parser.parse(new FileReader(DataPublisherTestUtil.getStreamDefinitionPath()));
-
-            jsonObject = (JSONObject) obj;
-
-        } catch (Exception e) {
-            throw new IOException("Failed");
-        }
+        Object obj = parser.parse(new FileReader(DataPublisherTestUtil.getStreamDefinitionPath()));
+        jsonObject = (JSONObject) obj;
         return jsonObject.toJSONString();
     }
 
-    private synchronized void startServer(int port) throws
-            StreamDefinitionStoreException, MalformedStreamDefinitionException, DataBridgeException, IOException {
-        thriftTestServer = new ThriftTestServer();
-        thriftTestServer.start(port);
-        thriftTestServer.addStreamDefinition(convertJSONtoString(), -1234);
-    }
-
-    @Test
-    public void testDataEndpoint() throws DataEndpointAuthenticationException, DataEndpointAgentConfigurationException,
-            TransportException, DataEndpointException, DataEndpointConfigurationException,
-            MalformedStreamDefinitionException, DataBridgeException, StreamDefinitionStoreException, IOException {
-
-        startServer(7611);
-
-        String url = "http://localhost:8080";
-        try {
-            URL requestUrl = new URL(url);
-
-            int responseCode;
-            HttpURLConnection connection = (HttpURLConnection) requestUrl.openConnection();
-            connection.setRequestMethod("GET");
-            responseCode = connection.getResponseCode();
-            Assert.assertEquals(200, responseCode);
-
-            //TODO: Validate the events being published to the Thrift data end point
-
-        } catch (IOException e) {
-            Assert.fail("Fail connection to the server. Error: " + e.getMessage());
-        }
-
-        thriftTestServer.stop();
-    }
 }

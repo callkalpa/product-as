@@ -17,17 +17,32 @@
  */
 package org.wso2.appserver.test.integration;
 
+import org.wso2.appserver.test.integration.statisticspublishing.ThriftTestServer;
+
 /**
  * The base class for the integration tests.
  *
  * @since 6.0.0
  */
 public class TestBase {
+
+    private static final String HOST = "localhost";
+
+    private static ThriftTestServer thriftTestServer;
+
     public String getAppserverHome() {
         return System.getProperty(TestConstants.APPSERVER_HOME);
     }
 
     public String getBaseUrl() {
-        return "http://localhost:" + System.getProperty(TestConstants.APPSERVER_PORT);
+        return "http://" + HOST + ":" + System.getProperty(TestConstants.APPSERVER_PORT);
+    }
+
+    public static ThriftTestServer getThriftTestServer() {
+        return thriftTestServer;
+    }
+
+    public static void setThriftTestServer(ThriftTestServer thriftServer) {
+        thriftTestServer = thriftServer;
     }
 }
