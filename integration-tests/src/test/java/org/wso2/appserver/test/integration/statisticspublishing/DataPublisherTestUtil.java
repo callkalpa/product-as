@@ -20,7 +20,6 @@ package org.wso2.appserver.test.integration.statisticspublishing;
 import java.io.File;
 
 public class DataPublisherTestUtil {
-    public static final String LOCAL_HOST = "localhost";
 
     public static void setTrustStoreParams() {
         File filePath = new File("src" + File.separator + "test" + File.separator + "resources");
