@@ -245,8 +245,7 @@
                             <goal>run</goal>
                         </goals>
                     </execution>
-                    <execution>
-                        <!-- This is to re order identity menu to config menu -->
+                    <!--execution>
                         <id>moving-identity-menu</id>
                         <phase>package</phase>
                         <configuration>
@@ -261,7 +260,7 @@
                         <goals>
                             <goal>run</goal>
                         </goals>
-                    </execution>
+                    </execution-->
 
                     <execution>
                         <id>clean_target</id>
